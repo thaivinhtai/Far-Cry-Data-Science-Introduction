@@ -1,6 +1,6 @@
 # Far Cry
 
-![Far Cry Wallpaper](farcry_wallpaper_introduction.jpg)
+![Far Cry Wallpaper](Images/farcry_wallpaper_introduction.jpg)
 
 ## Introduction
 
@@ -14,7 +14,7 @@ Players can join an online multiplayer session by connecting to a Far Cry server
 
 When the limited period of time expires, the game stops and it displays the results of the match as an ordered leaderboard with the number of kills and deaths per player, and the efficiency of each player:
 
-![Multiplayer Match Session Leaderboard](farcry_multiplayer-match-session-leaderboard.jpg)
+![Multiplayer Match Session Leaderboard](Images/farcry_multiplayer-match-session-leaderboard.jpg)
 
 ## Weapons
 
