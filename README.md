@@ -130,7 +130,7 @@ _Note 2: The method [`isoformat`](https://docs.python.org/3/library/datetime.htm
 
 # Waypoint 3: Parse Far Cry Engine's Start Time with Time Zone
 
-![World Time Zones Map](world-time-zones-map.png)
+![World Time Zones Map](Images/world-time-zones-map.png)
 
 However, even the time `November 09, 2018 12:22:07` is a relative time. It is relative to the place (a location) on Earth where the related event occurred. We call this time a [local time](https://www.dictionary.com/browse/local-time).
 
