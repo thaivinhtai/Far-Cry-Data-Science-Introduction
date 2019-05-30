@@ -83,9 +83,10 @@ def parse_log_start_time(log_data):
                         replace("Log Started at ", "")
     pivot = date_time_str.find(",")
     weekday = date_time_str[:3]
-    print(weekday)
     date_time_str = date_time_str.replace(date_time_str[:pivot], weekday)
-    print(date_time_str)
-    date_time_obj = datetime.datetime.\
-                        strptime(date_time_str, "%a, %B %d, %Y %H:%M:%S\r")
+    try:
+        date_time_obj = datetime.datetime.\
+                            strptime(date_time_str, "%a, %B %d, %Y %H:%M:%S\r")
+    except ValueError:
+        return print("Can't convert to datetime.")
     return date_time_obj
