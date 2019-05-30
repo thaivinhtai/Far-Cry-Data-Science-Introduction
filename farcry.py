@@ -30,6 +30,8 @@ grenades and pistols, to rocket launchers, machines guns and sniper rifles.
 Check out all of the weapons from good old Far Cry! They sound so cool!
 """
 
+import datetime
+
 
 def read_log_file(log_file_pathname):
     """Read the Far Cry log file.
@@ -53,5 +55,37 @@ def read_log_file(log_file_pathname):
         in_file = open(log_file_pathname, "rb")
         data = in_file.read()
         return data
-    except ValueError, FileNotFoundError, PermissionError:
+    except (ValueError, OSError):
         return bytes(0)
+
+
+def parse_log_start_time(log_data):
+    """Parse date and time information.
+
+    This function takes an argument log_data, representing the data read from a
+    Far Cry server's log file, and returns a datetime.datetime object
+    representing the time the Far Cry engine began to log events.
+
+    Parameters
+    ----------
+    log_data : bytes
+        all the bytes from the Far Cry server log file.
+
+    Returns
+    -------
+    object
+        datetime.datetime object representing the time the Far Cry engine began
+        to log events.
+    """
+    if not isinstance(log_data, bytes):
+        return print("Type error, it must be bytes!")
+    date_time_str = log_data.split(b'\n')[0].decode('utf-8').\
+                        replace("Log Started at ", "")
+    pivot = date_time_str.find(",")
+    weekday = date_time_str[:3]
+    print(weekday)
+    date_time_str = date_time_str.replace(date_time_str[:pivot], weekday)
+    print(date_time_str)
+    date_time_obj = datetime.datetime.\
+                        strptime(date_time_str, "%a, %B %d, %Y %H:%M:%S\r")
+    return date_time_obj
