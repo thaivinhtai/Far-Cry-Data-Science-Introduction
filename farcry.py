@@ -33,6 +33,40 @@ Check out all of the weapons from good old Far Cry! They sound so cool!
 import datetime
 
 
+class Cvars:
+    cvars = {}
+    bytes_list = []
+
+
+def __get_cvar(log_data):
+    """Get console variable.
+
+    This function gets cvar from the log file and stores in a dictionary.
+
+    Parameters
+    ----------
+    log_data : bytes
+        bytes object from content in log file.
+
+    Returns
+    -------
+    Dictionary
+        a dictionary of cvar and its value.
+    List
+        a list of lines of log data.
+    """
+    cvars = {}
+    str_data = log_data.split(b'\n')
+    Cvars.bytes_list = str_data
+    cvar_lines = [line for line in str_data if b'cvar' in line]
+    for cvar in cvar_lines:
+        cvars[cvar[(cvar.find(b'(') + 1):(cvar.find(b','))]] =\
+            cvar[cvar.find(b','):len(cvar) - 2]
+    Cvars.cvars.update(cvars)
+    print(Cvars.cvars)
+    return cvars, str_data
+
+
 def read_log_file(log_file_pathname):
     """Read the Far Cry log file.
 
@@ -54,6 +88,7 @@ def read_log_file(log_file_pathname):
         log_file_pathname = str(log_file_pathname)
         in_file = open(log_file_pathname, "rb")
         data = in_file.read()
+        __get_cvar(data)
         return data
     except (ValueError, OSError):
         return bytes(0)
