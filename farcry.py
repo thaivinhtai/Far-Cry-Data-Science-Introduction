@@ -61,9 +61,8 @@ def __get_cvar(log_data):
     cvar_lines = [line for line in str_data if b'cvar' in line]
     for cvar in cvar_lines:
         cvars[cvar[(cvar.find(b'(') + 1):(cvar.find(b','))]] =\
-            cvar[cvar.find(b','):len(cvar) - 2]
+            cvar[cvar.find(b',') + 1:len(cvar) - 2]
     Cvars.cvars.update(cvars)
-    print(Cvars.cvars)
     return cvars, str_data
 
 
@@ -119,9 +118,24 @@ def parse_log_start_time(log_data):
     pivot = date_time_str.find(",")
     weekday = date_time_str[:3]
     date_time_str = date_time_str.replace(date_time_str[:pivot], weekday)
+    utc_time = Cvars.cvars[b'g_timezone'].decode('utf-8')
+
+    #######################################################
+    # There are many cases that timezone could be writen, #
+    # but I think 2 are enough for this case of log file  #
+    #######################################################
+    if len(utc_time) == 2 and (utc_time[0] == "-" or utc_time[0] == "+"):
+        utc_time = utc_time[0] + "0" + utc_time[1] + "00"
+    if len(utc_time) == 3 and (utc_time[0] == "-" or utc_time[0] == "+"):
+        utc_time = utc_time + "00"
+    print(date_time_str)
+    print(utc_time)
+    date_time_str = date_time_str[:-1] + " " + utc_time
+    print(date_time_str)
     try:
         date_time_obj = datetime.datetime.\
-                            strptime(date_time_str, "%a, %B %d, %Y %H:%M:%S\r")
+                            strptime(date_time_str,
+                                     "%a, %B %d, %Y %H:%M:%S %z\r")
     except ValueError:
         return print("Can't convert to datetime.")
     return date_time_obj
