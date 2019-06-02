@@ -30,12 +30,11 @@ grenades and pistols, to rocket launchers, machines guns and sniper rifles.
 Check out all of the weapons from good old Far Cry! They sound so cool!
 """
 
-import datetime
+from datetime import datetime, timezone, timedelta
 
 
 class Cvars:
     cvars = {}
-    bytes_list = []
 
 
 def __get_cvar(log_data):
@@ -119,23 +118,91 @@ def parse_log_start_time(log_data):
     weekday = date_time_str[:3]
     date_time_str = date_time_str.replace(date_time_str[:pivot], weekday)
     utc_time = Cvars.cvars[b'g_timezone'].decode('utf-8')
-
-    #######################################################
-    # There are many cases that timezone could be writen, #
-    # but I think 2 are enough for this case of log file  #
-    #######################################################
-    if len(utc_time) == 2 and (utc_time[0] == "-" or utc_time[0] == "+"):
-        utc_time = utc_time[0] + "0" + utc_time[1] + "00"
-    if len(utc_time) == 3 and (utc_time[0] == "-" or utc_time[0] == "+"):
-        utc_time = utc_time + "00"
-    print(date_time_str)
-    print(utc_time)
-    date_time_str = date_time_str[:-1] + " " + utc_time
-    print(date_time_str)
     try:
-        date_time_obj = datetime.datetime.\
-                            strptime(date_time_str,
-                                     "%a, %B %d, %Y %H:%M:%S %z\r")
-    except ValueError:
+        date_time_obj = datetime.strptime(date_time_str,
+                                          "%a, %B %d, %Y %H:%M:%S\r")
+        date_time_obj_utc = date_time_obj.\
+                                replace(tzinfo=timezone
+                                        (timedelta(hours=int(utc_time))))
+    except (NameError, ValueError):
         return print("Can't convert to datetime.")
-    return date_time_obj
+    return date_time_obj_utc
+
+
+def parse_match_mode_and_map(log_data):
+    """Parse Match Session's Mode and Map.
+
+    Far Cry features several multiplayer modes:
+
+        - ASSAULT: There are two teams, one is defending a flag and the other
+          team is attacking it. Each maps has 3 flags and if after 20 minutes
+          not all flags are captured the teams switch sides. The flags are on
+          fixed positions in the map and only one flag at a time is active;
+
+        - TDM (Team DeathMatch): There are two teams. Players of one team kill
+          members of the other team;
+
+        - FFA (Free-For-All): Players kill anyone they can find.
+
+    There are also several maps available such as mp_surf, mp_radio and
+    mp_jungle to name a few.
+
+    This function takes an argument log_data, representing the data read from a
+    Far Cry server's log file, and returns a tuple (mode, map) where:
+
+        - mode: indicates the multiplayer mode that was played, either ASSAULT,
+          TDM, or FFA;
+
+        - map: the name of the map that was used, for instance mp_surf.
+
+    Parameters
+    ----------
+    log_data : bytes
+        all the bytes from the Far Cry server log file.
+
+    Returns
+    -------
+    tuple
+        (mode, map)
+    """
+    if not isinstance(log_data, bytes):
+        return print("Type error, it must be bytes!")
+    level_line = ""
+    list_bytes_by_line = log_data.split(b'\n')
+    for line in list_bytes_by_line:
+        if b'Loading level' in line:
+            level_line = line.decode('utf-8')
+            break
+    loading_position = level_line.find("Loading level")
+    level_line = level_line.replace(level_line[:loading_position], "")
+    while "-" in level_line:
+        level_line = level_line.replace("-", "")
+    try:
+        slash_position = level_line.find("/")
+        commas_position = level_line.find(",")
+        mission_position = level_line.find("mission")
+        map = level_line[slash_position + 1:commas_position]
+        mode = level_line[mission_position + 8: len(level_line) - 2]
+        return (mode, map)
+    except IndexError:
+        print("Can not parse Match Session's Mode and Map.")
+
+
+def parse_frags(log_data):
+    """Parse Frag History.
+
+    This function takes an argument log_data, representing the data read from
+    a Far Cry server's log file, and returns a list of frags.
+
+    Parameters
+    ----------
+    log_data : bytes
+        all the bytes from the Far Cry server log file.
+
+    Returns
+    -------
+    list
+        list of tuple of (frag_time, killer_name, victim_name, weapon_code)
+    """
+    if not isinstance(log_data, bytes):
+        return print("Type error, it must be bytes!")
