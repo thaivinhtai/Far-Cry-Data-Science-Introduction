@@ -206,3 +206,4 @@ def parse_frags(log_data):
     """
     if not isinstance(log_data, bytes):
         return print("Type error, it must be bytes!")
+    
