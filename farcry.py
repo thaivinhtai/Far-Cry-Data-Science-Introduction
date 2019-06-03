@@ -34,7 +34,7 @@ from datetime import datetime, timezone, timedelta
 from json import dumps
 
 
-__VEHICLE__ = "Vehicle"
+__VEHICLE__ = ["Vehicle"]
 
 __GUN__ = [
     "Falcon",
@@ -64,9 +64,9 @@ __ROCKET__ = [
     "VehicleRocket"
 ]
 
-__MACHETE__ = "Machete"
+__MACHETE__ = ["Machete"]
 
-__BOAT__ = "Boat"
+__BOAT__ = ["Boat"]
 
 
 class Cvars:
@@ -312,7 +312,33 @@ def prettify_frags(frags):
     list
         a list of strings
     """
+    if not isinstance(log_data, list):
+        return print("Type error, it must be list!")
     list_formated_strings = []
-    for element in frags:
-        line = ""
-        line += "[" + str(element[0].isoformat()) + "]" + " 😛 " + element[1]
+    try:
+        for element in frags:
+            line = ""
+            if len(element) == 2:
+                line += ("[" + str(element[0].isoformat()) + "]" +
+                         " 😦 " + element[1] + " ☠")
+                list_formated_strings.append(line)
+                continue
+            a = ""
+            if element[3] in __VEHICLE__:
+                a = "🚙"
+            if element[3] in __GUN__:
+                a = "🔫"
+            if element[3] in __GRENADE__:
+                a = "💣"
+            if element[3] in __ROCKET__:
+                a = "🚀"
+            if element[3] in __MACHETE__:
+                a = "🔪"
+            if element[3] in __BOAT__:
+                a = "🚤"
+            line += ("[" + str(element[0].isoformat()) + "]" + " 😛 " +
+                     element[1] + " " + a + " 😦 " + element[3])
+            list_formated_strings.append(line)
+        return list_formated_strings
+    except (IndexError, NameError, OSError, TypeError):
+        print("can not prettify frag history.")
