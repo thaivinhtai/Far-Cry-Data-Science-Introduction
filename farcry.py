@@ -31,9 +31,11 @@ Check out all of the weapons from good old Far Cry! They sound so cool!
 """
 
 from datetime import datetime, timezone, timedelta
+from json import dumps
 
 
 class Cvars:
+    """store cvar."""
     cvars = {}
 
 
@@ -56,13 +58,12 @@ def __get_cvar(log_data):
     """
     cvars = {}
     str_data = log_data.split(b'\n')
-    Cvars.bytes_list = str_data
     cvar_lines = [line for line in str_data if b'cvar' in line]
     for cvar in cvar_lines:
         cvars[cvar[(cvar.find(b'(') + 1):(cvar.find(b','))]] =\
             cvar[cvar.find(b',') + 1:len(cvar) - 2]
     Cvars.cvars.update(cvars)
-    return cvars, str_data
+    return cvars
 
 
 def read_log_file(log_file_pathname):
@@ -88,7 +89,7 @@ def read_log_file(log_file_pathname):
         data = in_file.read()
         __get_cvar(data)
         return data
-    except (ValueError, OSError):
+    except (ValueError, OSError, NameError):
         return bytes(0)
 
 
@@ -181,10 +182,10 @@ def parse_match_mode_and_map(log_data):
         slash_position = level_line.find("/")
         commas_position = level_line.find(",")
         mission_position = level_line.find("mission")
-        map = level_line[slash_position + 1:commas_position]
-        mode = level_line[mission_position + 8: len(level_line) - 2]
-        return (mode, map)
-    except IndexError:
+        _map = level_line[slash_position + 1:commas_position]
+        _mode = level_line[mission_position + 8: len(level_line) - 2]
+        return (_mode, _map)
+    except (IndexError, NameError):
         print("Can not parse Match Session's Mode and Map.")
 
 
@@ -206,4 +207,43 @@ def parse_frags(log_data):
     """
     if not isinstance(log_data, bytes):
         return print("Type error, it must be bytes!")
-    
+    list_bytes_by_line = log_data.split(b'\n')
+    list_frag_history = [line.decode('utf-8') for line in list_bytes_by_line
+                         if b'<Lua>' in line and b'killed' in line]
+    frag_history = []
+    human_readable = []
+    timestamp = parse_log_start_time(log_data)
+    try:
+        for line in list_frag_history:
+            frag_time = timestamp
+
+            time_start_position = line.find("<")
+            time_end_position = line.find(">")
+            lua_postion = line.find("<Lua>")
+            killed_position = line.find("killed")
+            with_position = line.find("with")
+
+            frag_time_string = line[time_start_position + 1:time_end_position]
+            minute_and_second = frag_time_string.split(":")
+            current_minute = int(minute_and_second[0])
+            current_second = int(minute_and_second[1])
+
+            if current_minute == 0 and frag_time.minute != 0:
+                frag_time = frag_time.replace(hour=frag_time.hour + 1)
+            frag_time = frag_time.replace(minute=current_minute,
+                                          second=current_second)
+            killer_name = line[lua_postion + 6:killed_position - 1]
+            if "itself" in line:
+                frag_history.append((frag_time, killer_name))
+                human_readable.append((frag_time.isoformat(), killer_name))
+                continue
+            victim_name = line[killed_position + 7:with_position - 1]
+            weapon_code = line[with_position + 5:len(line) - 1]
+            frag_history.append((frag_time, killer_name,
+                                 victim_name, weapon_code))
+            human_readable.append((frag_time.isoformat(), killer_name,
+                                   victim_name, weapon_code))
+        print(*human_readable, sep="\n")
+        return frag_history
+    except (IndexError, NameError):
+        print("Can not parse frag history.")
