@@ -34,6 +34,41 @@ from datetime import datetime, timezone, timedelta
 from json import dumps
 
 
+__VEHICLE__ = "Vehicle"
+
+__GUN__ = [
+    "Falcon",
+    "Shotgun",
+    "P90",
+    "MP5",
+    "M4",
+    "AG36",
+    "OICW",
+    "SniperRifle",
+    "M249",
+    "MG",
+    "VehicleMountedAutoMG",
+    "VehicleMountedMG"
+]
+
+__GRENADE__ = [
+    "HandGrenade",
+    "AG36Grenade",
+    "OICWGrenade",
+    "StickyExplosive"
+]
+
+__ROCKET__ = [
+    "Rocket",
+    "VehicleMountedRocketMG",
+    "VehicleRocket"
+]
+
+__MACHETE__ = "Machete"
+
+__BOAT__ = "Boat"
+
+
 class Cvars:
     """store cvar."""
     cvars = {}
@@ -125,7 +160,7 @@ def parse_log_start_time(log_data):
         date_time_obj_utc = date_time_obj.\
                                 replace(tzinfo=timezone
                                         (timedelta(hours=int(utc_time))))
-    except (NameError, ValueError):
+    except (NameError, ValueError, OSError):
         return print("Can't convert to datetime.")
     return date_time_obj_utc
 
@@ -185,7 +220,7 @@ def parse_match_mode_and_map(log_data):
         _map = level_line[slash_position + 1:commas_position]
         _mode = level_line[mission_position + 8: len(level_line) - 2]
         return (_mode, _map)
-    except (IndexError, NameError):
+    except (IndexError, NameError, OSError):
         print("Can not parse Match Session's Mode and Map.")
 
 
@@ -245,5 +280,39 @@ def parse_frags(log_data):
                                    victim_name, weapon_code))
         print(*human_readable, sep="\n")
         return frag_history
-    except (IndexError, NameError):
+    except (IndexError, NameError, OSError):
         print("Can not parse frag history.")
+
+
+def prettify_frags(frags):
+    """Prettify Frag History.
+
+    Emojis are pictographs (pictorial symbols) that are typically presented in
+    a colorful form and used inline with text. They represent things such as
+    faces, weather, vehicles and buildings, food and drink, animals and plants,
+    or icons that represent emotions, feelings, or activities.
+
+    This function  takes one argument frags, an array of tuples of frags parsed
+    from a Far Cry server's log file, and that returns a list of strings,
+    each with the following format:
+
+        [frag_time] 😛 killer_name weapon_icon 😦 victim_name
+
+    or, the simpler form, if the player committed suicide:
+
+        [frag_time] 😦 victim_name ☠
+
+    Parameters
+    ----------
+    frags : list
+        list of tuple of (frag_time, killer_name, victim_name, weapon_code)
+
+    Returns
+    -------
+    list
+        a list of strings
+    """
+    list_formated_strings = []
+    for element in frags:
+        line = ""
+        line += "[" + str(element[0].isoformat()) + "]" + " 😛 " + element[1]
