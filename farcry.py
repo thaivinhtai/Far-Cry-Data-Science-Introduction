@@ -342,3 +342,38 @@ def prettify_frags(frags):
         return list_formated_strings
     except (IndexError, NameError, OSError, TypeError):
         print("can not prettify frag history.")
+
+
+def parse_game_session_start_and_end_times(log_data):
+    """Determine Game Session's Start and End Times.
+
+    This function takes an argument log_data representing the data read from
+    a Far Cry server's log file  and returns the approximate start and end time
+    of the game session.
+
+    Parameters
+    ----------
+    log_data : bytes
+        all the bytes from the Far Cry server log file.
+
+    returns
+    -------
+    object
+        datetime.datetime object representing the time start and end time
+        of the game session.
+    """
+    if not isinstance(log_data, bytes):
+        return print("Type error, it must be list!")
+    list_bytes_by_line = log_data.split(b'\n')
+    line_contain_start_game = ""
+    line_contain_end_game = ""
+    for line in list_bytes_by_line:
+        if "Precaching level" in line:
+            line_containt_start_game = line
+        if "Statistics" in line:
+            line_contain_end_game = line
+            break
+    timestamp = parse_log_start_time(log_data)
+    start_minute =\
+        int(line_contain_start_game\
+            [line_contain_start_game.find("Precaching level")])
