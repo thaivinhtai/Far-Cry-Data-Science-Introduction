@@ -149,7 +149,7 @@ def parse_log_start_time(log_data):
     if not isinstance(log_data, bytes):
         return print("Type error, it must be bytes!")
     date_time_str = log_data.split(b'\n')[0].decode('utf-8').\
-                        replace("Log Started at ", "")
+        replace("Log Started at ", "")
     pivot = date_time_str.find(",")
     weekday = date_time_str[:3]
     date_time_str = date_time_str.replace(date_time_str[:pivot], weekday)
@@ -158,8 +158,7 @@ def parse_log_start_time(log_data):
         date_time_obj = datetime.strptime(date_time_str,
                                           "%a, %B %d, %Y %H:%M:%S\r")
         date_time_obj_utc = date_time_obj.\
-                                replace(tzinfo=timezone
-                                        (timedelta(hours=int(utc_time))))
+            replace(tzinfo=timezone(timedelta(hours=int(utc_time))))
     except (NameError, ValueError, OSError):
         return print("Can't convert to datetime.")
     return date_time_obj_utc
@@ -368,12 +367,24 @@ def parse_game_session_start_and_end_times(log_data):
     line_contain_start_game = ""
     line_contain_end_game = ""
     for line in list_bytes_by_line:
-        if "Precaching level" in line:
-            line_containt_start_game = line
-        if "Statistics" in line:
-            line_contain_end_game = line
+        if b'Precaching level' in line:
+            line_contain_start_game = line.decode("utf-8")
+        if b'Statistics' in line:
+            line_contain_end_game = line.decode("utf-8")
             break
+    if line_contain_end_game == "":
+        return None, None
     timestamp = parse_log_start_time(log_data)
     start_minute =\
-        int(line_contain_start_game\
-            [line_contain_start_game.find("Precaching level")])
+        int(line_contain_start_game
+            [line_contain_start_game.find("Precaching level") + 22:
+             line_contain_start_game.find("done") - 5])
+    start_second =\
+        int(line_contain_start_game
+            [line_contain_start_game.find("Precaching level") + 25:
+             line_contain_start_game.find("done") - 2])
+    end_minute = int(line_contain_end_game[1:3])
+    end_second = int(line_contain_end_game[4:6])
+    start_time = timestamp.replace(minute=start_minute, second=start_second)
+    end_time = timestamp.replace(minute=end_minute, second=end_second)
+    return start_time, end_time
