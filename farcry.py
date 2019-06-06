@@ -30,6 +30,7 @@ grenades and pistols, to rocket launchers, machines guns and sniper rifles.
 Check out all of the weapons from good old Far Cry! They sound so cool!
 """
 
+import csv
 from datetime import datetime, timezone, timedelta
 from json import dumps
 
@@ -388,3 +389,40 @@ def parse_game_session_start_and_end_times(log_data):
     start_time = timestamp.replace(minute=start_minute, second=start_second)
     end_time = timestamp.replace(minute=end_minute, second=end_second)
     return start_time, end_time
+
+
+def write_frag_csv_file(log_file_pathname, frags):
+    """Create Frag History CSV File.
+
+    This function takes an argument log_file_pathname representing the pathname
+    of the CSV file to store the frags in, and an argument frags, an array of
+    tuples of the frags.
+
+    Each frag is represented by a comma-separated value (CSV) string.
+
+    Parameters
+    ----------
+    log_file_pathname : str
+        the path name of the CSV file to store the frags in.
+    frags : list
+        list of tuple of (frag_time, killer_name, victim_name, weapon_code)
+
+    Returns
+    -------
+    NONE
+        The file log_file_pathname will be create or overwrite if it's existed
+    """
+    try:
+        with open(log_file_pathname, mode='w') as frag_file:
+            frag_file = csv.writer(frag_file, delimiter=',',
+                                   quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            for element in frags:
+                row_content = []
+                if len(element) == 4:
+                    row_content = [str(element[0]), element[1],
+                                   element[2], element[3]]
+                if len(element) == 2:
+                    row_content = [str(element[0]), element[1]]
+                frag_file.writerow(row_content)
+    except (IndexError, NameError, TypeError, PermissionError, OSError):
+        print("Cant not create frag history CSV file.")
