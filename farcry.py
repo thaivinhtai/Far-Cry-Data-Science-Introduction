@@ -33,6 +33,7 @@ Check out all of the weapons from good old Far Cry! They sound so cool!
 import csv
 from datetime import datetime, timezone, timedelta
 from json import dumps
+from sqlite3 import connect, DatabaseError, Connection
 
 
 __VEHICLE__ = ["Vehicle"]
@@ -344,7 +345,7 @@ def prettify_frags(frags):
         print("can not prettify frag history.")
 
 
-def parse_game_session_start_and_end_times(log_data):
+def parse_match_start_and_end_times(log_data, *arg):
     """Determine Game Session's Start and End Times.
 
     This function takes an argument log_data representing the data read from
@@ -426,3 +427,45 @@ def write_frag_csv_file(log_file_pathname, frags):
                 frag_file.writerow(row_content)
     except (IndexError, NameError, TypeError, PermissionError, OSError):
         print("Cant not create frag history CSV file.")
+
+
+def insert_match_to_sqlite(file_pathname, start_time, end_time,
+                           game_mode, map_name, frags):
+    """Insert Game Session Data into SQLite.
+
+    This function inserts a new record into the table match with the arguments
+    start_time, end_time, game_mode, and map_name, using an INSERT statement.
+    You need to use the Python module sqlite3.
+
+    Parameters
+    ----------
+    file_pathname : str
+        The path and name of the Far Cry's SQLite database.
+    start_time : datetime.datetime
+        time zone information corresponding to the start of the game session.
+    end_time : datetime.datetime
+        time zone information corresponding to the end of the game session.
+    game_mode : str
+        Multiplayer mode of the game session.
+    map_name : str
+        Name of the map that was played.
+    frags : list
+        A list of tuples of the following form:
+            (frag_time, killer_name[, victim_name, weapon_code])
+
+    Returns
+    -------
+    the identifier of the match that has been inserted. This information is
+    retrieved from the SQLite database using the method lastrowid.
+    """
+    command = """INSERT INTO match (start_time, end_time, game_mode,
+                 map_name) VALUES (?,?,?,?)"""
+    try:
+        with connect(file_pathname) as conn:
+            cursor = conn.cursor()
+            cursor.execute(command, (start_time, end_time,
+                                     game_mode, map_name))
+            # insert_frags_to_sqlite(conn, cur.lastrowid, frags)
+            return cursor.lastrowid
+    except DatabaseError:
+        print("Can not insert to database.")
