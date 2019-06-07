@@ -465,7 +465,7 @@ def insert_match_to_sqlite(file_pathname, start_time, end_time,
             cursor = conn.cursor()
             cursor.execute(command, (start_time, end_time,
                                      game_mode, map_name))
-            insert_frags_to_sqlite(conn, cur.lastrowid, frags)
+            insert_frags_to_sqlite(conn, cursor.lastrowid, frags)
             return cursor.lastrowid
     except DatabaseError:
         print("Can not insert to database.")
@@ -490,9 +490,10 @@ def insert_frags_to_sqlite(connection, match_id, frags):
     inserts new records into the table match_frag.
     """
     command1 = """INSERT INTO match_frag (match_id, frag_time,
-                 killer_name, victim_name, weapon_code) VALUES (?,?,?,?,?)"""
-    command2 =
-    cursor = conn.cursor()
+                  killer_name, victim_name, weapon_code) VALUES (?,?,?,?,?)"""
+    command2 = """INSERT INTO match_frag (match_id, frag_time, killer_name)
+                  VALUES (?,?,?)"""
+    cursor = connection.cursor()
     for frag in frags:
         if len(frag) > 2:
             cursor.execute(command1, (match_id, *frag))
